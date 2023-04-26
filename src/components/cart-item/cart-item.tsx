@@ -49,35 +49,39 @@ function CartItem({ camera, openModalWindow }: CartItemProps): JSX.Element {
   const dispatch = useAppDispatch();
   const [totalCount, setTotalCount] = useState<number>(count);
   const handleSetTotalCount = (event: ChangeEvent<HTMLInputElement>) => {
-    setTotalCount(
-      Number(event.target.value) >= ItemsCount.Min
-        ?
-        Number(event.target.value)
-        :
-        ItemsCount.Min
+    setTotalCount(Number(event.target.value));
+  };
+  const setItemCount = () => {
+    localStorage.setItem(LocalStorageParameter.BookedCameras,
+      JSON.stringify(setCameraCountInCart(
+        getBookedCamerasFromLocalStorage(),
+        {
+          id,
+          count: totalCount
+        })
+      )
     );
+    dispatch(setItemCountInCart({
+      id,
+      count: totalCount
+    }));
   };
   const handleCheckTotalCount = () => {
     if (totalCount !== count) {
-      if (totalCount < ItemsCount.Min) {
-        setTotalCount(ItemsCount.Min);
-      }
-      else if (totalCount > ItemsCount.Max) {
+      if (totalCount > ItemsCount.Max) {
         setTotalCount(ItemsCount.Max);
+        setItemCount();
       }
-      localStorage.setItem(LocalStorageParameter.BookedCameras,
-        JSON.stringify(setCameraCountInCart(
-          getBookedCamerasFromLocalStorage(),
-          {
-            id,
-            count: totalCount
-          })
-        )
-      );
-      dispatch(setItemCountInCart({
-        id,
-        count: totalCount
-      }));
+      else if (
+        totalCount >= ItemsCount.Min
+        &&
+        totalCount <= ItemsCount.Max
+      ) {
+        setItemCount();
+      }
+      else if (totalCount === 0) {
+        setTotalCount(count);
+      }
     }
     else {
       setTotalCount(count);
@@ -169,7 +173,7 @@ function CartItem({ camera, openModalWindow }: CartItemProps): JSX.Element {
           className="btn-icon btn-icon--prev"
           aria-label="уменьшить количество товара"
           onClick={handleDecreaseTotalCount}
-          disabled={totalCount === ItemsCount.Min}
+          disabled={totalCount <= ItemsCount.Min}
         >
           <svg
             width="7"
@@ -201,7 +205,7 @@ function CartItem({ camera, openModalWindow }: CartItemProps): JSX.Element {
           className="btn-icon btn-icon--next"
           aria-label="увеличить количество товара"
           onClick={handleIncreaseTotalCount}
-          disabled={totalCount === ItemsCount.Max}
+          disabled={totalCount >= ItemsCount.Max}
         >
           <svg
             width="7"
